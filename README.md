@@ -22,7 +22,8 @@ go mod init backend
 // install packages if running for the first time 
 go get –u "github.com/go-sql-driver/mysql"
 go get -u github.com/gorilla/mux
-
+```
+```golang
 // go run [microservice name].go
 go run passenger.go
 ```
@@ -30,6 +31,7 @@ Step 3: Change directory to where the backend folder is located. Run the Fronten
 ```golang
 // add go mod file if running for the first time
 go mod init frontend
-
+```
+```golang
 go run menu.go
 ```
