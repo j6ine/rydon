@@ -10,3 +10,26 @@ Technologies used are Go for the microservices and MySQL for the persistent stor
 	
 	
 ## Setup
+Step 1: In the directory you want to store the repo, clone Rydon using
+```
+git clone https://github.com/j6ine/rydon.git
+```
+Step 2: Change directory to where the backend folder is located. Run the Backend 
+```golang
+// add go mod file if running for the first time
+go mod init backend
+
+// install packages if running for the first time 
+go get –u "github.com/go-sql-driver/mysql"
+go get -u github.com/gorilla/mux
+
+// go run [microservice name].go
+go run passenger.go
+```
+Step 3: Change directory to where the backend folder is located. Run the Frontend 
+```golang
+// add go mod file if running for the first time
+go mod init frontend
+
+go run menu.go
+```
