@@ -84,7 +84,7 @@ func updatepassenger(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusAccepted)
 			} else {
 				w.WriteHeader(http.StatusConflict)
-				fmt.Fprintf(w, "Passenger email exists")
+				fmt.Fprintf(w, "Passenger email does not exists")
 			}
 		} else {
 			fmt.Println(err)
