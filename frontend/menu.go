@@ -118,7 +118,7 @@ func listAllPassengers() {
 
 func createPassenger() {
 	var passenger Passenger
-	
+
 	fmt.Scanf("%s", &(passenger.FirstName))
 	fmt.Println(passenger.FirstName)
 	fmt.Print("Enter your First Name: ")
@@ -165,12 +165,6 @@ func createPassenger() {
 func updatePassenger() {
 	var passenger Passenger
 
-	fmt.Scanf("%s", &(passenger.PassengerID))
-	fmt.Println(passenger.PassengerID)
-	fmt.Print("Enter the ID of the Passenger to be updated: ")
-	fmt.Scanf("%s", &(passenger.PassengerID))
-	fmt.Println("You typed: " + passenger.PassengerID)
-
 	fmt.Scanf("%s", &(passenger.FirstName))
 	fmt.Println(passenger.FirstName)
 	fmt.Print("Enter updated First Name: ")
@@ -198,12 +192,12 @@ func updatePassenger() {
 	postBody, _ := json.Marshal(passenger)
 
 	client := &http.Client{}
-	if req, err := http.NewRequest(http.MethodPut, "http://localhost:5000/api/v1/passengers/"+passenger.PassengerID, bytes.NewBuffer(postBody)); err == nil {
+	if req, err := http.NewRequest(http.MethodPut, "http://localhost:5000/api/v1/passengers/"+passenger.Email, bytes.NewBuffer(postBody)); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
 				fmt.Println("\nSuccess! - Passenger", passenger.PassengerID, "updated")
 			} else if res.StatusCode == 404 {
-				fmt.Println("\nOh No, Error! - Passenger", passenger.PassengerID, "does not exist")
+				fmt.Println("\nOh No, Error! - Passenger email", passenger.PassengerID, "does not exist")
 			}
 		} else {
 			fmt.Println(2, err)

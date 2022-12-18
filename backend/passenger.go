@@ -33,15 +33,13 @@ func main() {
 	}
 	defer db.Close()
 
-	// check
+	// print passengers in terminal
 	var passengers map[string]Passenger = map[string]Passenger{}
 	passengers = getPassengers()
 	fmt.Println(passengers)
-	var data string = "jo@gmail.com"
-	fmt.Println(data)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/passengers/{passengerid}", updatepassenger).Methods("PUT")
+	router.HandleFunc("/api/v1/passengers/{email}", updatepassenger).Methods("PUT")
 	router.HandleFunc("/api/v1/passengers", createpassenger).Methods("POST")
 	router.HandleFunc("/api/v1/passengers", allpassengers)
 	fmt.Println("Listening at port 5000")
@@ -53,7 +51,8 @@ func createpassenger(w http.ResponseWriter, r *http.Request) {
 		var data Passenger
 
 		if err := json.Unmarshal(body, &data); err == nil {
-			var emailExists bool = isEmailExist(data.Email)
+			_, emailExists := isEmailExist(data.Email)
+
 			if emailExists == false {
 				fmt.Println(data)
 				insertPassenger(data)
@@ -71,26 +70,26 @@ func createpassenger(w http.ResponseWriter, r *http.Request) {
 
 func updatepassenger(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	if r.Method == "PUT" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data Passenger
 
-			if err := json.Unmarshal(body, &data); err == nil {
-				if _, ok := isExist(params["passengerid"]); ok {
-					fmt.Println(data)
-					updatePassenger(params["passengerid"], data)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintf(w, "Passenger ID does not exist")
-				}
+	if body, err := ioutil.ReadAll(r.Body); err == nil {
+		var data Passenger
+
+		if err := json.Unmarshal(body, &data); err == nil {
+			p, emailExists := isEmailExist(params["email"])
+
+			if emailExists == true {
+				fmt.Println(p)
+				fmt.Println(p.PassengerID)
+				fmt.Println(data)
+				updatePassenger(p.PassengerID, data)
+				w.WriteHeader(http.StatusAccepted)
 			} else {
-				fmt.Println(err)
+				w.WriteHeader(http.StatusConflict)
+				fmt.Fprintf(w, "Passenger email exists")
 			}
+		} else {
+			fmt.Println(err)
 		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Invalid Passenger ID")
 	}
 }
 
@@ -136,16 +135,16 @@ func isExist(id string) (Passenger, bool) {
 	return p, true
 }
 
-func isEmailExist(email string) bool {
+func isEmailExist(email string) (Passenger, bool) {
 	var p Passenger
 
 	result := db.QueryRow("select * from passenger where email=?", email)
 	err := result.Scan(&p.PassengerID, &p.FirstName, &p.LastName, &p.MobileNum, &p.Email)
 	if err == sql.ErrNoRows {
-		return false
+		return p, false
 	}
 
-	return true
+	return p, true
 }
 
 func insertPassenger(p Passenger) {
