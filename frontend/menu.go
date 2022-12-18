@@ -118,13 +118,7 @@ func listAllPassengers() {
 
 func createPassenger() {
 	var passenger Passenger
-
-	fmt.Scanf("%s", &(passenger.PassengerID))
-	fmt.Println(passenger.PassengerID)
-	fmt.Print("Enter the ID of the Passenger to be created: ")
-	fmt.Scanf("%s", &(passenger.PassengerID))
-	fmt.Println("You typed: " + passenger.PassengerID)
-
+	
 	fmt.Scanf("%s", &(passenger.FirstName))
 	fmt.Println(passenger.FirstName)
 	fmt.Print("Enter your First Name: ")
@@ -153,12 +147,12 @@ func createPassenger() {
 	resBody := bytes.NewBuffer(postBody)
 
 	client := &http.Client{}
-	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/passengers/"+passenger.PassengerID, resBody); err == nil {
+	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/passengers", resBody); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
-				fmt.Println("\nSucess! - Passenger", passenger.PassengerID, "created")
+				fmt.Println("\nSuccess! - Passenger account created")
 			} else if res.StatusCode == 409 {
-				fmt.Println("\nOh No, Error! - Passenger", passenger.PassengerID, "exists")
+				fmt.Println("\nOh No, Error! - Passenger email already exists")
 			}
 		} else {
 			fmt.Println(2, err)

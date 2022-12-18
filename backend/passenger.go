@@ -37,35 +37,41 @@ func main() {
 	var passengers map[string]Passenger = map[string]Passenger{}
 	passengers = getPassengers()
 	fmt.Println(passengers)
+	var data string = "jo@gmail.com"
+	fmt.Println(data)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/passengers/{passengerid}", passenger).Methods("GET", "POST", "PATCH", "PUT")
+	router.HandleFunc("/api/v1/passengers/{passengerid}", updatepassenger).Methods("PUT")
+	router.HandleFunc("/api/v1/passengers", createpassenger).Methods("POST")
 	router.HandleFunc("/api/v1/passengers", allpassengers)
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
 
-func passenger(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+func createpassenger(w http.ResponseWriter, r *http.Request) {
+	if body, err := ioutil.ReadAll(r.Body); err == nil {
+		var data Passenger
 
-	if r.Method == "POST" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data Passenger
-			fmt.Println(string(body))
-			if err := json.Unmarshal(body, &data); err == nil {
-				if _, ok := isExist(params["passengerid"]); !ok {
-					fmt.Println(data)
-					insertPassenger(params["passengerid"], data)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusConflict)
-					fmt.Fprintf(w, "Passenger ID exist")
-				}
+		if err := json.Unmarshal(body, &data); err == nil {
+			var emailExists bool = isEmailExist(data.Email)
+			if emailExists == false {
+				fmt.Println(data)
+				insertPassenger(data)
+				w.WriteHeader(http.StatusAccepted)
 			} else {
-				fmt.Println(err)
+				w.WriteHeader(http.StatusConflict)
+				fmt.Fprintf(w, "Passenger email exists")
 			}
+		} else {
+			fmt.Println(err)
 		}
-	} else if r.Method == "PUT" {
+	}
+
+}
+
+func updatepassenger(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	if r.Method == "PUT" {
 		if body, err := ioutil.ReadAll(r.Body); err == nil {
 			var data Passenger
 
@@ -73,36 +79,6 @@ func passenger(w http.ResponseWriter, r *http.Request) {
 				if _, ok := isExist(params["passengerid"]); ok {
 					fmt.Println(data)
 					updatePassenger(params["passengerid"], data)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintf(w, "Passenger ID does not exist")
-				}
-			} else {
-				fmt.Println(err)
-			}
-		}
-	} else if r.Method == "PATCH" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data map[string]interface{}
-
-			if err := json.Unmarshal(body, &data); err == nil {
-				if orig, ok := isExist(params["passengerid"]); ok {
-					fmt.Println(data)
-
-					for k, v := range data {
-						switch k {
-						case "FirstName":
-							orig.FirstName = v.(string)
-						case "LastName":
-							orig.LastName = v.(string)
-						case "MobileNum":
-							orig.MobileNum = v.(string)
-						case "Email":
-							orig.Email = v.(string)
-						}
-					}
-					updatePassenger(params["passengerid"], orig)
 					w.WriteHeader(http.StatusAccepted)
 				} else {
 					w.WriteHeader(http.StatusNotFound)
@@ -160,8 +136,20 @@ func isExist(id string) (Passenger, bool) {
 	return p, true
 }
 
-func insertPassenger(id string, p Passenger) {
-	_, err := db.Exec("insert into passenger values(?,?,?,?,?)", id, p.FirstName, p.LastName, p.MobileNum, p.Email)
+func isEmailExist(email string) bool {
+	var p Passenger
+
+	result := db.QueryRow("select * from passenger where email=?", email)
+	err := result.Scan(&p.PassengerID, &p.FirstName, &p.LastName, &p.MobileNum, &p.Email)
+	if err == sql.ErrNoRows {
+		return false
+	}
+
+	return true
+}
+
+func insertPassenger(p Passenger) {
+	_, err := db.Exec("insert into passenger (firstname, lastname, mobilenum, email) values(?,?,?,?)", p.FirstName, p.LastName, p.MobileNum, p.Email)
 	if err != nil {
 		panic(err.Error())
 	}
