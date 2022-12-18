@@ -66,9 +66,7 @@ outer:
 			fmt.Println("\n~ Updating a Passenger Account ~")
 			updatePassenger()
 		case 4:
-			// requestTrip()
-		case 5:
-			// listAllTrips()
+			// requestTrip
 		case 6:
 			fmt.Println("\n~ Creating a Driver Account ~")
 			createDriver()
@@ -150,9 +148,9 @@ func createPassenger() {
 	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/passengers", resBody); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
-				fmt.Println("\nSuccess! - Passenger account created")
+				fmt.Println("\nSuccess! - Passenger account with email", passenger.Email, "created")
 			} else if res.StatusCode == 409 {
-				fmt.Println("\nOh No, Error! - Passenger email already exists")
+				fmt.Println("\nOh No, Error! - Passenger email", passenger.Email, "already exists")
 			}
 		} else {
 			fmt.Println(2, err)
@@ -164,6 +162,12 @@ func createPassenger() {
 
 func updatePassenger() {
 	var passenger Passenger
+
+	fmt.Scanf("%s", &(passenger.Email))
+	fmt.Println(passenger.Email)
+	fmt.Print("Enter your Email (can't be modified): ")
+	fmt.Scanf("%s", &(passenger.Email))
+	fmt.Println("You typed: " + passenger.Email)
 
 	fmt.Scanf("%s", &(passenger.FirstName))
 	fmt.Println(passenger.FirstName)
@@ -183,21 +187,15 @@ func updatePassenger() {
 	fmt.Scanf("%s", &(passenger.MobileNum))
 	fmt.Println("You typed: " + passenger.MobileNum)
 
-	fmt.Scanf("%s", &(passenger.Email))
-	fmt.Println(passenger.Email)
-	fmt.Print("Enter updated Email: ")
-	fmt.Scanf("%s", &(passenger.Email))
-	fmt.Println("You typed: " + passenger.Email)
-
 	postBody, _ := json.Marshal(passenger)
 
 	client := &http.Client{}
 	if req, err := http.NewRequest(http.MethodPut, "http://localhost:5000/api/v1/passengers/"+passenger.Email, bytes.NewBuffer(postBody)); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
-				fmt.Println("\nSuccess! - Passenger", passenger.PassengerID, "updated")
+				fmt.Println("\nSuccess! - Passenger with email", passenger.Email, "updated")
 			} else if res.StatusCode == 404 {
-				fmt.Println("\nOh No, Error! - Passenger email", passenger.PassengerID, "does not exist")
+				fmt.Println("\nOh No, Error! - Passenger email", passenger.Email, "does not exist")
 			}
 		} else {
 			fmt.Println(2, err)
@@ -239,12 +237,6 @@ func listAllDrivers() {
 func createDriver() {
 	var driver Driver
 
-	// fmt.Scanf("%s", &(driver.DriverID))
-	// fmt.Println(driver.DriverID)
-	// fmt.Print("Enter the ID of the Driver to be created: ")
-	// fmt.Scanf("%s", &(driver.DriverID))
-	// fmt.Println("You typed: " + driver.DriverID)
-
 	fmt.Scanf("%s", &(driver.FirstName))
 	fmt.Println(driver.FirstName)
 	fmt.Print("Enter your First Name: ")
@@ -285,12 +277,12 @@ func createDriver() {
 	resBody := bytes.NewBuffer(postBody)
 
 	client := &http.Client{}
-	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/drivers/"+driver.DriverID, resBody); err == nil {
+	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/drivers/", resBody); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
-				fmt.Println("\nSucess! - Driver", driver.DriverID, "created")
-			} else if res.StatusCode == 409 {
-				fmt.Println("\nOh No, Error! - Driver", driver.DriverID, "exists")
+				fmt.Println("\nSuccess! - Driver account with email", driver.Email, "created")
+			} else if res.StatusCode == 404 {
+				fmt.Println("\nOh No, Error! - Driver email", driver.Email, "already exists")
 			}
 		} else {
 			fmt.Println(2, err)
@@ -303,11 +295,11 @@ func createDriver() {
 func updateDriver() {
 	var driver Driver
 
-	fmt.Scanf("%s", &(driver.DriverID))
-	fmt.Println(driver.DriverID)
-	fmt.Print("Enter the ID of the Driver to be updated: ")
-	fmt.Scanf("%s", &(driver.DriverID))
-	fmt.Println("You typed: " + driver.DriverID)
+	fmt.Scanf("%s", &(driver.Email))
+	fmt.Println(driver.Email)
+	fmt.Print("Enter your Email (can't be modified): ")
+	fmt.Scanf("%s", &(driver.Email))
+	fmt.Println("You typed: " + driver.Email)
 
 	fmt.Scanf("%s", &(driver.FirstName))
 	fmt.Println(driver.FirstName)
@@ -327,12 +319,6 @@ func updateDriver() {
 	fmt.Scanf("%s", &(driver.MobileNum))
 	fmt.Println("You typed: " + driver.MobileNum)
 
-	fmt.Scanf("%s", &(driver.Email))
-	fmt.Println(driver.Email)
-	fmt.Print("Enter updated Email: ")
-	fmt.Scanf("%s", &(driver.Email))
-	fmt.Println("You typed: " + driver.Email)
-
 	fmt.Scanf("%s", &(driver.LicenseNum))
 	fmt.Println(driver.LicenseNum)
 	fmt.Print("Enter new License Number: ")
@@ -342,12 +328,12 @@ func updateDriver() {
 	postBody, _ := json.Marshal(driver)
 
 	client := &http.Client{}
-	if req, err := http.NewRequest(http.MethodPut, "http://localhost:5000/api/v1/drivers/"+driver.DriverID, bytes.NewBuffer(postBody)); err == nil {
+	if req, err := http.NewRequest(http.MethodPut, "http://localhost:5000/api/v1/drivers/"+driver.Email, bytes.NewBuffer(postBody)); err == nil {
 		if res, err := client.Do(req); err == nil {
 			if res.StatusCode == 202 {
-				fmt.Println("\nSuccess! - Driver", driver.DriverID, "updated")
+				fmt.Println("\nSuccess! - Driver with email", driver.Email, "updated")
 			} else if res.StatusCode == 404 {
-				fmt.Println("\nOh No, Error! - Driver", driver.DriverID, "does not exist")
+				fmt.Println("\nOh No, Error! - Driver email", driver.Email, "does not exist")
 			}
 		} else {
 			fmt.Println(2, err)

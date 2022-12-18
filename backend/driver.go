@@ -35,92 +35,62 @@ func main() {
 	}
 	defer db.Close()
 
-	// check
+	// print drivers in terminal
 	var drivers map[string]Driver = map[string]Driver{}
 	drivers = getDrivers()
 	fmt.Println(drivers)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/drivers/{driverid}", driver).Methods("GET", "POST", "PATCH", "PUT")
+	router.HandleFunc("/api/v1/drivers/{email}", updatedriver).Methods("PUT")
+	router.HandleFunc("/api/v1/drivers", createdriver).Methods("POST")
 	router.HandleFunc("/api/v1/drivers", alldrivers)
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
 
-func driver(w http.ResponseWriter, r *http.Request) {
+func createdriver(w http.ResponseWriter, r *http.Request) {
+	if body, err := ioutil.ReadAll(r.Body); err == nil {
+		var data Driver
+
+		if err := json.Unmarshal(body, &data); err == nil {
+			_, emailExists := isEmailExist(data.Email)
+
+			if emailExists == false {
+				fmt.Println(data)
+				insertDriver(data)
+				w.WriteHeader(http.StatusAccepted)
+			} else {
+				w.WriteHeader(http.StatusConflict)
+				fmt.Fprintf(w, "Driver email exists")
+			}
+		} else {
+			fmt.Println(err)
+		}
+	}
+}
+
+func updatedriver(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	if r.Method == "POST" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data Driver
-			fmt.Println(string(body))
-			if err := json.Unmarshal(body, &data); err == nil {
-				if _, ok := isExist(params["driverid"]); !ok {
-					fmt.Println(data)
-					insertDriver(params["driverid"], data)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusConflict)
-					fmt.Fprintf(w, "Driver ID exist")
-				}
-			} else {
-				fmt.Println(err)
-			}
-		}
-	} else if r.Method == "PUT" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data Driver
+	if body, err := ioutil.ReadAll(r.Body); err == nil {
+		var data Driver
 
-			if err := json.Unmarshal(body, &data); err == nil {
-				if _, ok := isExist(params["driverid"]); ok {
-					fmt.Println(data)
-					updateDriver(params["driverid"], data)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintf(w, "Driver ID does not exist")
-				}
-			} else {
-				fmt.Println(err)
-			}
-		}
-	} else if r.Method == "PATCH" {
-		if body, err := ioutil.ReadAll(r.Body); err == nil {
-			var data map[string]interface{}
+		if err := json.Unmarshal(body, &data); err == nil {
+			d, emailExists := isEmailExist(params["email"])
 
-			if err := json.Unmarshal(body, &data); err == nil {
-				if orig, ok := isExist(params["driverid"]); ok {
-					fmt.Println(data)
-
-					for k, v := range data {
-						switch k {
-						case "FirstName":
-							orig.FirstName = v.(string)
-						case "LastName":
-							orig.LastName = v.(string)
-						case "MobileNum":
-							orig.MobileNum = v.(string)
-						case "Email":
-							orig.Email = v.(string)
-						case "ID":
-							orig.ID = v.(string)
-						case "LicenseNum":
-							orig.LicenseNum = v.(string)
-						}
-					}
-					updateDriver(params["driverid"], orig)
-					w.WriteHeader(http.StatusAccepted)
-				} else {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintf(w, "Driver ID does not exist")
-				}
+			if emailExists == true {
+				fmt.Println(d)
+				fmt.Println(d.DriverID)
+				fmt.Println(data)
+				updateDriver(d.DriverID, data)
+				w.WriteHeader(http.StatusAccepted)
 			} else {
-				fmt.Println(err)
+				w.WriteHeader(http.StatusConflict)
+				fmt.Fprintf(w, "Driver email does not exist")
 			}
+		} else {
+			fmt.Println(err)
 		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Invalid Driver ID")
 	}
 }
 
@@ -154,7 +124,7 @@ func getDrivers() map[string]Driver {
 	return drivers
 }
 
-func isExist(id string) (Driver, bool) {
+func isIdExist(id string) (Driver, bool) {
 	var d Driver
 
 	result := db.QueryRow("select * from driver where driverid=?", id)
@@ -166,15 +136,27 @@ func isExist(id string) (Driver, bool) {
 	return d, true
 }
 
-func insertDriver(id string, d Driver) {
-	_, err := db.Exec("insert into driver values(?,?,?,?,?,?,?)", id, d.FirstName, d.LastName, d.MobileNum, d.Email, d.ID, d.LicenseNum)
+func isEmailExist(email string) (Driver, bool) {
+	var d Driver
+
+	result := db.QueryRow("select * from driver where email=?", email)
+	err := result.Scan(&d.DriverID, &d.FirstName, &d.LastName, &d.MobileNum, &d.Email, &d.ID, &d.LicenseNum)
+	if err == sql.ErrNoRows {
+		return d, false
+	}
+
+	return d, true
+}
+
+func insertDriver(d Driver) {
+	_, err := db.Exec("insert into driver (firstname, lastname, mobilenum, email, id, licensenum) values(?,?,?,?,?,?)", d.FirstName, d.LastName, d.MobileNum, d.Email, d.ID, d.LicenseNum)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func updateDriver(id string, d Driver) {
-	_, err := db.Exec("update driver set firstname=?, lastname=?, mobilenum=?, email=?, id=?, licensenum=? where driverid=?", d.FirstName, d.LastName, d.MobileNum, d.Email, d.ID, d.LicenseNum, id)
+	_, err := db.Exec("update driver set firstname=?, lastname=?, mobilenum=?, email=?, licensenum=? where driverid=?", d.FirstName, d.LastName, d.MobileNum, d.Email, d.LicenseNum, id)
 	if err != nil {
 		panic(err.Error())
 	}
