@@ -65,7 +65,6 @@ func createpassenger(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 	}
-
 }
 
 func updatepassenger(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +122,7 @@ func getPassengers() map[string]Passenger {
 	return passengers
 }
 
-func isExist(id string) (Passenger, bool) {
+func isIdExist(id string) (Passenger, bool) {
 	var p Passenger
 
 	result := db.QueryRow("select * from passenger where passengerid=?", id)
