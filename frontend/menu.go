@@ -91,6 +91,7 @@ outer:
 			createTrip()
 		case 5:
 			fmt.Println("\n~ Retrieving All Trips ~")
+			listAllPassengers()
 			listAllPassengerTrips()
 		case 6:
 			fmt.Println("\n~ Creating a Driver Account ~")
@@ -125,12 +126,7 @@ func listAllPassengers() {
 				json.Unmarshal(body, &res)
 
 				for k, v := range res.Passengers {
-					fmt.Println(v.PassengerID, "(", k, ")")
-					fmt.Println("First Name:", v.FirstName)
-					fmt.Println("Last Name:", v.LastName)
-					fmt.Println("Mobile Number:", v.MobileNum)
-					fmt.Println("Email:", v.Email)
-					fmt.Println()
+					fmt.Printf("[%s] %s %s - %s\n", k, v.FirstName, v.LastName, v.Email)
 				}
 			}
 		} else {
@@ -242,14 +238,7 @@ func listAllDrivers() {
 				json.Unmarshal(body, &res)
 
 				for k, v := range res.Drivers {
-					fmt.Println(v.DriverID, "(", k, ")")
-					fmt.Println("First Name:", v.FirstName)
-					fmt.Println("Last Name:", v.LastName)
-					fmt.Println("Mobile Number:", v.MobileNum)
-					fmt.Println("Email:", v.Email)
-					fmt.Println("Identification Number (NRIC):", v.ID)
-					fmt.Println("Email:", v.LicenseNum)
-					fmt.Println()
+					fmt.Printf("[%s] %s %s - %s\n", k, v.FirstName, v.LastName, v.Email)
 				}
 			}
 		} else {
@@ -439,8 +428,7 @@ func listAllTrips() {
 
 func listAllPassengerTrips() {
 	var passengerid string
-
-	fmt.Print("Enter your Passenger ID: ")
+	fmt.Print("\nPlease enter your Passenger ID by referring to the list above: ")
 	fmt.Scanf("%s", &(passengerid))
 	fmt.Println("You typed: " + passengerid + "\n")
 
@@ -452,9 +440,10 @@ func listAllPassengerTrips() {
 				var res Trips
 				json.Unmarshal(body, &res)
 
+				fmt.Println("~~~ List of trips starting with the most recent ~~~")
+
 				for k, v := range res.Trips {
-					fmt.Println(v.TripID, "(", k, ")")
-					fmt.Println("Date and Time of Trip:", v.TripDate)
+					fmt.Printf("[%s] Date and Time of Trip: %s", k, v.TripDate)
 					fmt.Println("Status of Trip:", v.TripStatus)
 					fmt.Println("Pickup Location:", v.PickupLocation)
 					fmt.Println("Dropoff Location:", v.DropoffLocation)
