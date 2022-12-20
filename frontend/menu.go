@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type Passenger struct {
@@ -32,33 +36,50 @@ type Drivers struct {
 	Drivers map[string]Driver `json:"Drivers"`
 }
 
+type Trip struct {
+	TripID          string `json:"Trip ID"`
+	TripDate        string `json: "Trip Date`
+	TripStatus      string `json:"Trip Status"`
+	PassengerID     string `json:"Passenger ID"`
+	PickupLocation  string `json:"Pickup Location"`
+	DropoffLocation string `json:"Dropoff Location"`
+	DriverID        string `json:"DriverID"`
+}
+
+type Trips struct {
+	Trips map[string]Trip `json:"Trips"`
+}
+
 func main() {
 
 outer:
 	for {
-		fmt.Println("\n\n==============================")
-		fmt.Println("Rydon: Ride Sharing Platform\n",
-			"\nFor Passengers:\n",
+		fmt.Println("\n\n ==============================")
+		fmt.Println("  Rydon: Ride Sharing Platform\n",
+			"==============================",
+			"\n For Passengers:\n",
 			"1. Create Passenger Account\n",
 			"2. Update Passenger Account\n",
 			"4. Request a Trip\n",
 			"5. Retrieve All Trips\n",
-			"\nFor Drivers:\n",
+			"\n For Drivers:\n",
 			"6. Create Driver Account\n",
 			"7. Update Driver Account\n",
 			"8. Initiate a Trip\n",
 			"9. End a Trip\n",
-			"\nFor Admin (JuJu):\n",
+			"\n For Admin (JuJu):\n",
 			"10. Retrieve All Passengers\n",
 			"11. Retrieve All Drivers\n",
-			"\n 12. Quit")
+			"12. Retrieve All Trips\n",
+			"\n 13. Quit")
 
-		fmt.Print("Enter an option: ")
+		fmt.Print("\n Enter an option: ")
 
-		var choice int
-		fmt.Scanf("%d", &choice)
+		reader := bufio.NewReader(os.Stdin)
+		userInput, _ := reader.ReadString('\n')
+		option, _ := strconv.Atoi(strings.TrimSpace(userInput))
 
-		switch choice {
+		switch option {
 		case 1:
 			fmt.Println("\n~ Creating a Passenger Account ~")
 			createPassenger()
@@ -66,7 +87,11 @@ outer:
 			fmt.Println("\n~ Updating a Passenger Account ~")
 			updatePassenger()
 		case 4:
-			// requestTrip
+			fmt.Println("\n~ Requesting a Trip ~")
+			createTrip()
+		case 5:
+			fmt.Println("\n~ Retrieving All Trips ~")
+			listAllPassengerTrips()
 		case 6:
 			fmt.Println("\n~ Creating a Driver Account ~")
 			createDriver()
@@ -80,6 +105,9 @@ outer:
 			fmt.Println("\n~ Listing All Drivers ~")
 			listAllDrivers()
 		case 12:
+			fmt.Println("\n~ Listing All Trips ~")
+			listAllTrips()
+		case 13:
 			break outer
 		default:
 			fmt.Println("### Invalid Input ###")
@@ -95,7 +123,6 @@ func listAllPassengers() {
 			if body, err := ioutil.ReadAll(res.Body); err == nil {
 				var res Passengers
 				json.Unmarshal(body, &res)
-				println(body)
 
 				for k, v := range res.Passengers {
 					fmt.Println(v.PassengerID, "(", k, ")")
@@ -213,7 +240,6 @@ func listAllDrivers() {
 			if body, err := ioutil.ReadAll(res.Body); err == nil {
 				var res Drivers
 				json.Unmarshal(body, &res)
-				println(body)
 
 				for k, v := range res.Drivers {
 					fmt.Println(v.DriverID, "(", k, ")")
@@ -334,6 +360,107 @@ func updateDriver() {
 				fmt.Println("\nSuccess! - Driver with email", driver.Email, "updated")
 			} else if res.StatusCode == 404 {
 				fmt.Println("\nOh No, Error! - Driver email", driver.Email, "does not exist")
+			}
+		} else {
+			fmt.Println(2, err)
+		}
+	} else {
+		fmt.Println(3, err)
+	}
+}
+
+func createTrip() {
+	var trip Trip
+
+	fmt.Scanf("%s", &(trip.PassengerID))
+	fmt.Println(trip.PassengerID)
+	fmt.Print("Enter your Passenger ID: ")
+	fmt.Scanf("%s", &(trip.PassengerID))
+	fmt.Println("You typed: " + trip.PassengerID)
+
+	fmt.Scanf("%s", &(trip.PickupLocation))
+	fmt.Println(trip.PickupLocation)
+	fmt.Print("Enter Postal Code of Pickup Location: ")
+	fmt.Scanf("%s", &(trip.PickupLocation))
+	fmt.Println("You typed: " + trip.PickupLocation)
+
+	fmt.Scanf("%s", &(trip.DropoffLocation))
+	fmt.Println(trip.DropoffLocation)
+	fmt.Print("Enter Postal Code of Dropoff Location: ")
+	fmt.Scanf("%s", &(trip.DropoffLocation))
+	fmt.Println("You typed: " + trip.DropoffLocation)
+
+	fmt.Println(trip)
+	postBody, _ := json.Marshal(trip)
+	resBody := bytes.NewBuffer(postBody)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/api/v1/trips", resBody); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if res.StatusCode == 202 {
+				fmt.Println("\nSuccess! - Trip requested. Please wait while we find you a driver!")
+			} else if res.StatusCode == 409 {
+				fmt.Println("\nOh No, Error!")
+			}
+		} else {
+			fmt.Println(2, err)
+		}
+	} else {
+		fmt.Println(3, err)
+	}
+}
+
+func listAllTrips() {
+	client := &http.Client{}
+
+	if req, err := http.NewRequest(http.MethodGet, "http://localhost:5000/api/v1/trips", nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if body, err := ioutil.ReadAll(res.Body); err == nil {
+				var res Trips
+				json.Unmarshal(body, &res)
+
+				for k, v := range res.Trips {
+					fmt.Println(v.TripID, "(", k, ")")
+					fmt.Println("Date and Time of Trip:", v.TripDate)
+					fmt.Println("Status of Trip:", v.TripStatus)
+					fmt.Println("Pickup Location:", v.PickupLocation)
+					fmt.Println("Dropoff Location:", v.DropoffLocation)
+					fmt.Println("Driver ID:", v.DriverID)
+					fmt.Println()
+				}
+			}
+		} else {
+			fmt.Println(2, err)
+		}
+	} else {
+		fmt.Println(3, err)
+	}
+}
+
+func listAllPassengerTrips() {
+	var passengerid string
+
+	fmt.Print("Enter your Passenger ID: ")
+	fmt.Scanf("%s", &(passengerid))
+	fmt.Println("You typed: " + passengerid + "\n")
+
+	client := &http.Client{}
+
+	if req, err := http.NewRequest(http.MethodGet, "http://localhost:5000/api/v1/trips/"+passengerid, nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if body, err := ioutil.ReadAll(res.Body); err == nil {
+				var res Trips
+				json.Unmarshal(body, &res)
+
+				for k, v := range res.Trips {
+					fmt.Println(v.TripID, "(", k, ")")
+					fmt.Println("Date and Time of Trip:", v.TripDate)
+					fmt.Println("Status of Trip:", v.TripStatus)
+					fmt.Println("Pickup Location:", v.PickupLocation)
+					fmt.Println("Dropoff Location:", v.DropoffLocation)
+					fmt.Println("Driver ID:", v.DriverID)
+					fmt.Println()
+				}
 			}
 		} else {
 			fmt.Println(2, err)
