@@ -143,7 +143,7 @@ func getpassengertrips(passengerid string) map[string]Trip {
 func isPassengerIdExist(id string) (Trip, bool) {
 	var t Trip
 
-	result := db.QueryRow("select * from trip where passengerid=?", id)
+	result := db.QueryRow("select * from trip where passengerid=?", id, "order by tripdate asc")
 	err := result.Scan(&id, &t.TripDate, &t.TripStatus, &t.PassengerID, &t.PickupLocation, &t.DropoffLocation, &t.DriverID)
 	if err == sql.ErrNoRows {
 		return t, false
